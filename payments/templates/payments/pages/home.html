@@ -1,1 +1,61 @@
-<h1>Home</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div id="cardPaymentBrick_container"></div>
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
+    <script>
+        const mp = new MercadoPago('{{public_key}}');
+        const bricksBuilder = mp.bricks();
+        const renderCardPaymentBrick = async (bricksBuilder) => {
+
+            const settings = {
+              initialization: {
+                amount: 100, // valor total a ser pago
+              },
+              callbacks: {
+                onReady: () => {
+                  /*
+                    Callback chamado quando o Brick estiver pronto.
+                    Aqui você pode ocultar loadings do seu site, por exemplo.
+                  */
+                },
+                onSubmit: (cardFormData) => {
+                  // callback chamado o usuário clicar no botão de submissão dos dados
+          
+                  // ejemplo de envío de los datos recolectados por el Brick a su servidor
+                  return new Promise((resolve, reject) => {
+                      fetch("/processpayment/", { 
+                          method: "POST",
+                          headers: {
+                              "Content-Type": "application/json",
+                          },
+                          body: JSON.stringify(cardFormData)
+                      })
+                      .then((response) => {
+                          // receber o resultado do pagamento
+                          resolve();
+                      })
+                      .catch((error) => {
+                          // lidar com a resposta de erro ao tentar criar o pagamento
+                          reject();
+                      })
+                    });
+                },
+                onError: (error) => { 
+                  // callback chamado para todos os casos de erro do Brick
+                  console.error(error);
+                },
+              },
+            };
+            const cardPaymentBrickController = await bricksBuilder.create('cardPayment', 'cardPaymentBrick_container', settings);
+          };
+          renderCardPaymentBrick(bricksBuilder);
+    </script>
+</body>
+</html>

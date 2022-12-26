@@ -1,7 +1,10 @@
+import json
+import os
+
 import mercadopago
 from django.conf import settings
-
 from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
 
 sdk = mercadopago.SDK(settings.ACCESS_TOKEN)
 
@@ -9,35 +12,36 @@ sdk = mercadopago.SDK(settings.ACCESS_TOKEN)
 
 
 def home(request):
-    card_data = {
-        "card_number": "5031433215406351",
-        "security_code": "123",
-        "expiration_month": "12",
-        "expiration_year": "2025",
-        "cardholder": {
-            "name": "Heitor Louzeiro",
-            "identification": {
-                "type": "CPF",
-                "number": "12345678909"
-            }
-        }
+    template_name = 'payments/pages/home.html'
+    context = {
+        'public_key': os.environ.get('PUBLIC_KEY'),
     }
-    card_token_response = sdk.card_token().create(card_data)
-    card_token = card_token_response["response"]["id"]
-    print(card_token)
+    return render(request, template_name, context)
 
+
+@csrf_exempt
+def processpayment(request):
+    data_json = request.body
+    data = json.loads(data_json)
     payment_data = {
-        "transaction_amount": 100,
-        "token": card_token,
-        "description": "Teste de pagamento",
-        "installments": 1,
+        "transaction_amount": float(data["transaction_amount"]),
+        "token": data["token"],
+        "installments": int(data["installments"]),
+        "payment_method_id": data["payment_method_id"],
+        "issuer_id": data["issuer_id"],
         "payer": {
-            "email": "heitorlouzeiro2019@gmail.com",
-
+            "email": data["payer"]["email"],
+            "identification": {
+                "type": data["payer"]["identification"]["type"],
+                "number": data["payer"]["identification"]["number"]
+            }
         }
     }
 
     payment_response = sdk.payment().create(payment_data)
     payment = payment_response["response"]
-    print(payment)
+
+    print("status =>", payment["status"])
+    print("status_detail =>", payment["status_detail"])
+    print("id =>", payment["id"])
     return render(request, 'payments/pages/home.html')
