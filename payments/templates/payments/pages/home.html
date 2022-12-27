@@ -7,28 +7,37 @@
     <title>Document</title>
   </head>
   <body>
+    {% csrf_token %}
     <div id="paymentBrick_container"></div>
     <script src="https://sdk.mercadopago.com/js/v2"></script>
     <script>
       const mp = new MercadoPago('{{public_key}}')
+      const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
       const bricksBuilder = mp.bricks()
       const renderPaymentBrick = async (bricksBuilder) => {
         const settings = {
           initialization: {
             amount: 100 // valor total a ser pago
           },
+          payer: {
+            email: 'jose@maria.com'
+          },
           customization: {
             paymentMethods: {
-              creditCard: 'all',
-              debitCard: 'all'
-            }
+              bankTransfer: ['pix']
+            },
+          },
+          back_urls: {
+            "success": "https://www.mercadopago.com.br/",
+            "failure": "https://getbootstrap.com/",
+            "pending": "https://www.python.org/"
           },
           callbacks: {
             onReady: () => {
               /*
-                        Callback chamado quando o Brick estiver pronto.
-                        Aqui você pode ocultar loadings do seu site, por exemplo.
-                      */
+                              Callback chamado quando o Brick estiver pronto.
+                              Aqui você pode ocultar loadings do seu site, por exemplo.
+                            */
             },
             onSubmit: ({ selectedPaymentMethod, formData }) => {
               // callback chamado ao clicar no botão de submissão dos dados
@@ -36,7 +45,8 @@
                 fetch('/processpayment/', {
                   method: 'POST',
                   headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken,
                   },
                   body: JSON.stringify(formData)
                 })
