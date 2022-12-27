@@ -3,9 +3,8 @@ import os
 
 import mercadopago
 from django.conf import settings
-from django.http import HttpResponseRedirect
-from django.shortcuts import redirect, render
-from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponse
+from django.shortcuts import render
 
 sdk = mercadopago.SDK(settings.ACCESS_TOKEN)
 
@@ -27,24 +26,31 @@ def processpayment(request):
         data = json.loads(data_json)
         payment_data = {
             "transaction_amount": float(data["transaction_amount"]),
-            "installments": 1,
+            "description": "Título do produto",
             "payment_method_id": data["payment_method_id"],
             "payer": {
-                "email": data["payer"]["email"],
+                "email": "test@test.com",
+                "first_name": "Test",
+                "last_name": "User",
                 "identification": {
                     "type": "CPF",
-                    "number": "191191191-00",
+                    "number": "191191191-00"
+                },
+                "address": {
+                    "zip_code": "06233-200",
+                    "street_name": "Av. das Nações Unidas",
+                    "street_number": "3003",
+                    "neighborhood": "Bonfim",
+                    "city": "Osasco",
+                    "federal_unit": "SP"
                 }
             }
         }
 
         payment_response = sdk.payment().create(payment_data)
         payment = payment_response["response"]
-
-        print("status =>", payment["status"])
-        print("status_detail =>", payment["status_detail"])
-        print("id =>", payment["id"])
-        return redirect(f'/pending/?payment_id={payment["id"]}')
+        print(payment)
+        return HttpResponse(payment)
 
 
 def resultpayment(request):
