@@ -44,8 +44,7 @@ def processpayment(request):
         print("status =>", payment["status"])
         print("status_detail =>", payment["status_detail"])
         print("id =>", payment["id"])
-        response = redirect('/pending/')
-        return response
+        return redirect(f'/pending/?payment_id={payment["id"]}')
 
 
 def resultpayment(request):
